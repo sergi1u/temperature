@@ -1,1 +1,1 @@
-Hola
+Visualizador de sensor de temperatura
