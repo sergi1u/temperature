@@ -11,8 +11,7 @@
 
 
 #define aref_voltage 3.3          // we tie 3.3V to ARef and measure it with a multimeter!
-#define sensorTemp            A0  // pin de entrada analogicasensor TMP36
-#define ThermistorPIN         A1  // Analog Pin 1
+#define ThermistorPIN         A0  // Analog Pin 1
 #define LeftPhotoresistorPIN  A2  // Analog Pin 2
 #define RightPhotoresistorPIN A3  // Analog Pin 3
 #define LED                    8  // Led para comprobar funcionamiento del sistema
