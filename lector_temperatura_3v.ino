@@ -17,9 +17,9 @@
 #define RightPhotoresistorPIN A3  // Analog Pin 3
 #define LED                    8  // Led para comprobar funcionamiento del sistema
 
-const unsigned long int MAX_MARGEN_LECTURAS = 5 * 60 * 1000;  // Margen de tiempo maximo dentro del que se calculara media aritmetica de las lecturas
+const unsigned long int MAX_MARGEN_LECTURAS = 300000;  // Margen de tiempo maximo dentro del que se calculara media aritmetica de las lecturas ( 5 minutos )
 const unsigned long int INTERVALO_BLINK = 100;  // tiempo de duracion del parpadeo
-const unsigned long int INTERVALO_LECTURA_SENSORES = 15 * 1000;  // tiempo de duracion entre lecturas de sensores
+const unsigned long int INTERVALO_LECTURA_SENSORES = 60000;  // tiempo de duracion entre lecturas de sensores ( 1 minuto )
 
 
 /*
@@ -147,6 +147,11 @@ void loop(){
     if( c == 'D' ){
       envia_datos();
     }
+    // Releer sensores y enviar resultado
+    else if( c == 'R' ){
+      lee_sensores();
+      envia_datos();
+    }
     // Encender el LED
     else if( c == 'H' ){
       digitalWrite(LED,HIGH);
@@ -170,8 +175,12 @@ void loop(){
       digitalWrite(LED,LOW);
   }
 
-  if ( millis() - ultima_lectura_datos > INTERVALO_LECTURA_SENSORES ){
+  if ( ( millis() - ultima_lectura_datos ) > INTERVALO_LECTURA_SENSORES ){
     lee_sensores();
   }
+  
+  // Descansa el tiempo de un parpadeo del led como minimo
+  delay(INTERVALO_BLINK);
+
   
 }
