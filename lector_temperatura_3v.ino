@@ -3,6 +3,7 @@
   en formato --- temperatura;milisecs ---
   Lee la entrada de datos desde el puerto serie con los siguientes disparadores:
     Si recibe una "D" envia los datos obtenidos de los sensores
+    Si recibe una "R" Relee los valores de los sensores y envia los datos obtenidos
     Si recibe una "B" enciende/apaga el led en un intervalo de INTERVALO_BLINK milisegundos
     Si recibe una "H" enciende un led. Al recibir "L" lo apaga
    
