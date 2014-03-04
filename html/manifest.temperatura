@@ -1,0 +1,9 @@
+CACHE MANIFEST
+# version 1.2
+
+NETWORK:
+*
+
+CACHE:
+index.html
+temperatura.html
