@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es" manifest="manifest.temperatura">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<title>Control de sensores arduino</title>
+<style>
+  body{
+	background-color: rgb(200,228,228);
+	color:#002129;
+	font-family: serif,Helvetica,Arial;
+	font-size: 16px;
+  }
+
+  footer{
+	color:#002129;
+	margin-top:25px;
+        padding: 2px;
+ }
+ 
+
+  .grupo_btn_graf{
+	margin-top:10px;
+	margin-bottom:10px;
+  }
+
+  .btnGraf{
+	background-color: rgb(150,178,178);
+	border-radius:1em;
+	box-shadow: 3px 3px 1px #888888;
+	color:#F2F4F4;
+  }
+
+
+  .temperaturas{
+	border-radius:2em;
+	box-shadow: 10px 10px 5px #888888;
+	background-color: #CCFFFF;
+	display:inline-block;
+	margin: 5px;
+	padding: 25px;
+  }
+
+  .tmpActual{
+	display:inline-block;
+        padding: 8px;
+  }
+  .tmpMaxMin{
+	display:inline-block;
+        padding: 8px;
+	vertical-align: top;
+  }
+
+  .botonera{
+	clear:both;
+	margin: 5px;
+	padding: 25px;
+  }
+
+  #sp_temperatura{
+	color: #2B3737;
+	font-size: 8em;
+	font-weight: bold;
+  }
+
+  #p_minima{
+	color: #4D4DFF;
+ 	display:block;
+        padding: 8px;
+	margin-top: 1em;
+  }
+  #p_maxima{
+	color: #B20000;
+	display:block;
+        padding: 8px;
+	margin-top: 3em;
+  }
+
+</style>
+
+</head>
+<body onload="javascript:refresca();">
+<header>
+<h1>Sensor de temperatura</h1>
+</header>
+
+<section class="sensores">
+<article>
+Última lectura: <span id="fecha_lectura"></span>
+<!--
+<input type="button" id="boton_para_refresco" value="Parar refresco" onclick="javascript:paraRefresco();" />
+-->
+</article>
+</section>
+
+<section class="datos">
+
+<div class="temperaturas">
+<article class="tmpActual">
+<span class="txt_sensor" id="sp_temperatura">?? ºC</span>
+</article>
+
+<article class="tmpMaxMin">
+<p id="p_minima">
+<span id="sp_temperatura_minima">?? ºC</span>
+</p>
+
+<p id="p_maxima" >
+<span id="sp_temperatura_maxima">?? ºC</span>
+</p>
+</article>
+</div>
+
+</section>
+
+<section class="graficos">
+
+<div class="grupo_btn_graf">
+<input type="button" class="btnGraf" name="btn_muestraGrafica" onclick="javascript:muestraGrafica(48);" value="Temperatura 2 días">
+<input type="button" class="btnGraf" name="btn_muestraGrafica" onclick="javascript:muestraGrafica(24);" value="Temperatura 1 día">
+<input type="button" class="btnGraf" name="btn_muestraGrafica" onclick="javascript:muestraGrafica(12);" value="Temperatura 12 horas">
+<input type="button" class="btnGraf" name="btn_muestraGrafica" onclick="javascript:muestraGrafica(6);" value="Temperatura 6 horas">
+</div>
+
+<article class="graficas" id="grafica_temperatura"> </article>
+
+<div class="grupo_btn_graf">
+<input type="button" class="btnGraf" name="btn_muestraGrafica" onclick="javascript:muestraLuminosidad(48);" value="Luminosidad 2 días">
+<input type="button" class="btnGraf" name="btn_muestraGrafica" onclick="javascript:muestraLuminosidad(24);" value="Luminosidad 1 día">
+<input type="button" class="btnGraf" name="btn_muestraGrafica" onclick="javascript:muestraLuminosidad(12);" value="Luminosidad 12 horas">
+<input type="button" class="btnGraf" name="btn_muestraGrafica" onclick="javascript:muestraLuminosidad(6);" value="Luminosidad 6 horas">
+</div>
+
+<article class="graficas" id="grafica_luminosidad"> </article>
+
+</section>
+
+
+<footer>
+<a href="http://candades.com/temperatura">Info del proyecto</a>
+</footer>
+
+
+<script languaje="text/javascript">
+
+var INTERVALO_REFRESCO= 60*1000;	// 60 segundos
+var timer;
+
+// Genera un XMLHttpRequest para enviar peticiones POST pidiendo desafio o enviando autenticacion
+function refresca()
+{
+	var param_post = "";
+
+	var xhr = new XMLHttpRequest();
+	if ( typeof xhr.withCredentials === undefined ){
+		return false;
+	}
+
+	xhr.onerror = function(e){
+		alert( "Error en petición de datos." );
+	}
+
+	xhr.onprogress = function(e){
+		var ratio = e.loaded / e.total;
+		//debug( ratio + "% descargado." );
+	}
+
+	// Se han recibido los datos solicitados
+	xhr.onload = function(e){
+		//debug( "Datos recibidos" );
+		respuestaAutenticacion(e, xhr);
+	}
+
+	xhr.open("GET", "tmp_max_min.json", true);
+
+	//param_post  = "tipo=1";
+
+	xhr.setRequestHeader ('Content-type','application/x-www-form-urlencoded')
+	//xhr.send( param_post );
+	xhr.send( );
+
+ 
+        timer = setTimeout( refresca , INTERVALO_REFRESCO );
+}
+
+
+function paraRefresco(){
+	clearTimeout( timer );
+}
+
+function respuestaAutenticacion(e, xhr)
+{
+	var aRespuesta = JSON.parse(xhr.responseText);
+/*
+	if( aRespuesta.count != 5){
+		alert( "La petición al servidor no ha obtenido respuesta correcta." );
+		return;
+	}
+*/
+	var fecha = new Date();
+	document.getElementById("fecha_lectura").innerHTML = fecha.toLocaleString();
+	document.getElementById("sp_temperatura").innerHTML = parseFloat( aRespuesta.temperatura_actual ).toFixed(1) + " ºC";
+	document.getElementById("sp_temperatura_minima").innerHTML = aRespuesta.temperatura_minima+ " ºC";
+	document.getElementById("sp_temperatura_maxima").innerHTML = aRespuesta.temperatura_maxima+ " ºC";
+	//alert( "Recibido " + aRespuesta[0] + " " + aRespuesta[1] );
+
+
+	//TODO
+}
+
+function muestraGrafica( horas ){
+   var section = document.getElementById("grafica_temperatura");
+   section.innerHTML="<img src=\"https://api.xively.com/v2/feeds/1651193641/datastreams/termistor.png?duration=" + horas + "hours&b=true&g=true&t=datos de " + horas + " horas\" />"
+}
+
+function muestraLuminosidad( horas ){
+   var section = document.getElementById("grafica_luminosidad");
+   section.innerHTML="<img src=\"https://api.xively.com/v2/feeds/1651193641/datastreams/luz_dia.png?duration=" + horas + "hours&b=true&g=true&t=datos de " + horas + " horas\" />"
+}
+
+</script>
+
+</body>
+</html>
