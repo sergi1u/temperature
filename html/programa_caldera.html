@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<style>
+.tabla_prog_caldera{
+	border-style: solid;
+}
+th{
+	min-width: 1em;
+	text-align: right;
+}
+td{
+	border-style: solid;
+	border-width: 1px;
+	text-align: right;
+}
+</style>
+
+<script type="text/javascript">
+
+function reset_prog_caldera()
+{
+	var prog_caldera=[
+		[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,3],
+		[3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,3],
+		[3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,3],
+		[3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,3],
+		[3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,3],
+		[3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,3,3,3,3,3,3,3,3],
+		[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
+	    ];
+	var prog_temperature=[0,5,11,15];
+
+	fill_prog_caldera( prog_caldera );
+	fill_prog_temperature( prog_temperature );
+
+}
+
+
+
+function fill_prog_caldera( prog_caldera )
+{
+	var days =['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+	var txt = ""
+	var n,m;
+
+	txt = "<table class='tabla_prog_caldera'>";
+	txt +="<tr><th>Hour</th>";
+	for ( m = 0; m<24; m++ ){
+	  txt += "<th>" + m+ "</th>";
+	}
+	txt += "</tr>\n";
+
+	for( n = 0; n<7; n++){
+	  txt +="<tr>";
+	  txt += "<td>" + days[n] + "</td>";
+	  for ( m = 0; m<24; m++ ){
+		txt += "<td id='prog_" + n + "_" + m + "'>" + prog_caldera[n][m] + "</td>";
+	  }
+	  txt += "</tr>\n";
+	}
+	txt += "</table>";
+
+	document.getElementById("prog_caldera").innerHTML = txt;
+}
+
+function fill_prog_temperature( prog_temperature )
+{
+	var txt = ""
+	var n;
+
+	txt = "<table class='tabla_prog_temperature'>";
+	txt +="<tr><th></th><th>t0</th><th>t1</th><th>t2</th><th>t3</th></tr>";
+
+	txt +="<tr><th>Temperatures</th>";
+	for( n = 0; n<4; n++){
+	  txt += "<td id='temp_" + n + "'>" + prog_temperature[n] + "</td>";
+	}
+	txt += "</tr>\n";
+	txt += "</table>";
+
+	document.getElementById("prog_temperature").innerHTML = txt;
+}
+
+
+/*
+  Extrae la parte seleccionada de la ventana. La pasa una lista de nodos tipo <td>
+  Localiza los <td> que tienen el id empezando por "prog_" y les cambia el texto por el pasado por parametro nuevo_texto.
+*/
+function cambiaSeleccionados( nuevo_texto )
+{
+	// obtiene la seleccion de ventana
+    	var selection = window.getSelection();
+   	if (selection.rangeCount > 0){
+    		var documentFragment = selection.getRangeAt(0).cloneContents();
+		var nodeList = documentFragment.querySelectorAll('td');
+
+		for( var i = 0; i< nodeList.length; i++ ){
+			if( nodeList[i].id.substring(0,5) === 'prog_' )
+				document.getElementById(nodeList[i].id).innerHTML = nuevo_texto;
+		}
+	}
+	
+	return;
+
+}
+
+function getProgCaldera()
+{
+	sendData( 'getProg', receivedProgCaldera );
+}	// end  getProgCaldera()
+
+// Genera un XMLHttpRequest para enviar peticiones POST
+function sendData( tipo_peticion , callback )
+{
+	var param_post = "";
+
+	var xhr = new XMLHttpRequest();
+	if ( typeof xhr.withCredentials === undefined ){
+		return false;
+	}
+
+	xhr.onerror = function(e){
+		alert( "Error sending data. " + e );
+	}
+
+	xhr.onprogress = function(e){
+		var ratio = e.loaded / e.total;
+	}
+
+	// Se han recibido los datos solicitados
+	xhr.onload = function(e){
+		callback(e, xhr);
+	}
+
+	xhr.open("POST", "manage_prog_caldera.json", true);
+
+	if( tipo_peticion === 'getProg' ){
+		param_post  = "type=" + tipo_peticion;
+	}
+
+	else
+		return;
+
+	xhr.setRequestHeader ('Content-type','application/x-www-form-urlencoded')
+	xhr.send( param_post );
+
+}
+
+
+function receivedProgCaldera(e, xhr, options)
+{
+	var aData;
+
+	if( xhr.responseText ===  "" ){
+		alert( "Respuesta nula" );
+		return;
+	}
+
+	aData = JSON.parse(xhr.responseText);
+
+
+	if( aData.length != 2){
+		alert( "La petición al servidor no ha obtenido la respuesta esperada." );
+		return;
+	}
+
+	fill_prog_caldera( aData[0] );
+	fill_prog_temperature( aData[1] );
+	
+
+}
+
+</script>
+</head>
+
+<body onload="javascript:getProgCaldera();">
+<section>
+<article id="prog_caldera"></article>
+<article id="prog_temperature"></article>
+</section>
+
+<nav>
+<input type="button" value="Reset Prog." onclick="javascript:reset_prog_caldera();" />
+<input type="button" value="Get Prog." onclick="javascript:getProgCaldera();" />
+
+<input type="button" value="t1" onclick="javascript:cambiaSeleccionados('1');" />
+<input type="button" value="t2" onclick="javascript:cambiaSeleccionados('2');" />
+<input type="button" value="t3" onclick="javascript:cambiaSeleccionados('3');" />
+</nav>
+
+</body>
+</html>
