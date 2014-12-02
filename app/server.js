@@ -5,9 +5,11 @@ const POSICION_TEMPERATURA	= 0;
 const POSICION_LUMINOSIDAD_IZQ	= 1;
 const POSICION_LUMINOSIDAD_DER	= 2;
 const POSICION_TIMER		= 3;
+const POSICION_TMP280		= 4;
+const POSICION_PREASURE0	= 5;
 
 const INTERVALO_PETICION_LECTURAS = 5 * 60 * 1000;  // cada 5 minutos 
-const INTERVALO_ENVIO_CANDADES =  15 * 60 * 1000;  // cada 15 minutos
+const INTERVALO_ENVIO_CANDADES =  10 * 60 * 1000;  // cada 10 minutos
 const INTERVALO_ENVIO_XIVELY =  10 * 60 * 1000;  // cada 10 minutos
 var https = require('https');
 
@@ -17,6 +19,21 @@ var temperatura_minima = 200;
 var temperatura_maxima = -100;
 var fecha_minima;
 var fecha_maxima;
+
+// Tabla de temperaturas programadas en caldera t0 t1 t2 t3
+var temp_prog = [0, 21, 19, 16.5];
+
+// Matriz con los valores programados en la caldera t0 t1 t2 o t3
+// Hora	 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
+var prog_caldera = [
+	[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,3],	// Sunday
+	[3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,3],	// Monday
+	[3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,3],	// Tuesday
+	[3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,3],	// Thirday
+	[3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,3],	// Wednesday
+	[3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,3,3,3,3,3,3,3],	// Friday
+	[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],	// Saturday
+    ];
 
 /*
  Recige ek dato de la posicion <ind> en la cadena de datos <dato> separados por ";"
@@ -34,10 +51,25 @@ function enviaXively( ){
         //var temperatura = ultimoDato.substring(0,ultimoDato.indexOf(';'));
 	//temperatura = Math.round(temperatura);
 	var temperatura = getDatoN( ultimoDato, POSICION_TEMPERATURA );
-	temperatura = parseFloat(temperatura).toFixed(2);
 	var luminosidad_izq = getDatoN( ultimoDato, POSICION_LUMINOSIDAD_IZQ );
 	var luminosidad_der = getDatoN( ultimoDato, POSICION_LUMINOSIDAD_DER );
 
+	var tmp280 = getDatoN( ultimoDato, POSICION_TMP280 );
+	tmp280 = parseFloat(tmp280).toFixed(2);
+
+	var preassure0 = getDatoN( ultimoDato, POSICION_PREASURE0 );
+	preassure0 = parseFloat(preassure0).toFixed(2);
+
+
+	var date = new Date();
+	var time_prog = prog_caldera[date.getDay()][date.getHours()];
+	var pide_caldera = 0;
+	
+	if( temperatura < temp_prog[ time_prog ] )
+		pide_caldera = 1;
+
+	temperatura = parseFloat(temperatura).toFixed(2);
+	
 	console.log("Enviando a Xively temp: " + temperatura );
 
 	   // Prepara el json que enviara Xively
@@ -47,15 +79,25 @@ function enviaXively( ){
 		  "id" : "termistor",
         	  "current_value" : temperatura 
 		},
-	/*
 		{
-		  "id" : "luz_noche",
+		  "id" : "luz_500_ohm",
         	  "current_value" : luminosidad_izq 
 	   	 },
-        */
 		{
 		  "id" : "luz_dia",
         	  "current_value" : luminosidad_der 
+	   	 },
+		{
+		  "id" : "tmp280",
+        	  "current_value" : tmp280 
+	   	 },
+		{
+		  "id" : "preassure0",
+        	  "current_value" : preassure0 
+	   	 },
+		{
+		  "id" : "pide_caldera",
+        	  "current_value" : pide_caldera 
 	   	 } ]
          }); 
 
@@ -64,7 +106,8 @@ function enviaXively( ){
 	  path: '/v2/feeds/1651193641.json',
 	  method: 'PUT',
 	  headers: {
-	    'X-ApiKey': 'xively-key-here',
+	    //'X-ApiKey': 'n157qWw4mF8ub5IjACAqX5TuuBGd7zdn2xGOclZGipHO8XgZ',
+	    'X-ApiKey': 'API KEY HERE'
 	    'Content-Type': 'application/json',
 	    'Content-Length': jdata.length,
 	    'Host': 'api.xively.com'
@@ -103,14 +146,18 @@ function enviaCandades( ){
 
         var temperatura = ultimoDato.substring(0,ultimoDato.indexOf(';'));
 	temperatura = parseFloat(temperatura).toFixed(2);
-	//temperatura = Math.round(temperatura);
+	var luminosidad_der = getDatoN( ultimoDato, POSICION_LUMINOSIDAD_DER );
+        var preassure0 = getDatoN( ultimoDato, POSICION_PREASURE0 );
+
 
 	console.log("Enviando a Candades temp: " + temperatura );
 
 	   // Prepara el json que enviara Xively
 	 var jdata = JSON.stringify({
 		"id_usuario": 'tmpcantemp',
-		"temperatura" : temperatura 
+		"temperatura" : temperatura,
+		"preassure0" : preassure0,
+		"luminosidad_der" : luminosidad_der 
              }); 
 
 	var options = {
@@ -152,7 +199,7 @@ function enviaCandades( ){
  Zona de gestion de datos recibidos de RaspberryPi y envio de datos
 ********************************************************************************************/
 
-var SerialPort = require("serialport").SerialPort
+var SerialPort = require("serialport").SerialPort;
 var serialPort = new SerialPort("/dev/ttyUSB0", {
   baudrate: 9600
 });
@@ -219,7 +266,7 @@ var http = require('http');
 
 
 // Manifiesto para controlar la recarga de index.html
-var postManifest = fs.readFileSync( '../html/manifest.temperatura', 'UTF8'  );
+var postManifest = fs.readFileSync( '/home/pi/html/manifest.temperatura', 'UTF8'  );
 
 // Contiene el HTML de la pagina index.html
 var postHTML="";
@@ -232,6 +279,16 @@ function leeHTML( ){
 }
 leeHTML();
 
+// Contiene el HTML de la pagina programa_caldera.html
+var progCalderaHTML="";
+function leeHTML( ){
+  fs.readFile('/home/pi/html/programa_caldera.html', { encoding: "UTF8" },
+    function (err, data) {
+      if (err) throw err;
+      progCalderaHTML= data.toString();
+    });
+}
+leeHTML();
 var server = http.createServer(function (req, res) {
   var body = "";
   req.on('data', function (chunk) {
@@ -253,6 +310,11 @@ var server = http.createServer(function (req, res) {
       //leeHTML();  // Va releyendo el fichero esto solo por depuracion
       res.end( postHTML );
     }
+    else if( url == "/programa_caldera.html"  ){
+      // TODO
+      res.end( progCalderaHTML );
+    }
+
     else if( url == "/temperatura.json" ){
 	// Permite peticiones incrustradas en paginas externas
 
@@ -288,6 +350,14 @@ var server = http.createServer(function (req, res) {
 	console.log("Enviado temperatura maxima y minima.");
 	return;
     }
+    else if( url == "/manage_prog_caldera.json" ){
+
+	res.end( JSON.stringify( [ prog_caldera, temp_prog ] ) );
+
+	console.log("Enviado programación de caldera.");
+	return;
+    }
+
     else if( url == "/reset" ){
 	var temperatura = getDatoN( ultimoDato, POSICION_TEMPERATURA );
 	var fecha = new Date().toUTCString();
@@ -312,13 +382,12 @@ var server = http.createServer(function (req, res) {
 	return;
     }
     // fuerza el envio a candades
-
     else if( url == "/envia" ){
 	enviaCandades();
         res.end( );
 	return;
     }
-    // fuerza el envio a xively
+    // fuerza el envio a xively 
     else if( url == "/xively" ){
 	enviaXively();
         res.end( );
