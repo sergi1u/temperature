@@ -107,7 +107,7 @@ function enviaXively( ){
 	  method: 'PUT',
 	  headers: {
 	    //'X-ApiKey': 'n157qWw4mF8ub5IjACAqX5TuuBGd7zdn2xGOclZGipHO8XgZ',
-	    'X-ApiKey': 'API KEY HERE'
+	    'X-ApiKey': 'wKos29LOwVEsHNZOETYNyNrKuxJY5vSNEm2abDO5Ojkai1Un',
 	    'Content-Type': 'application/json',
 	    'Content-Length': jdata.length,
 	    'Host': 'api.xively.com'
@@ -279,18 +279,22 @@ function leeHTML( ){
 }
 leeHTML();
 
+
 // Contiene el HTML de la pagina programa_caldera.html
 var progCalderaHTML="";
-function leeHTML( ){
+function leeHTML2( ){
   fs.readFile('/home/pi/html/programa_caldera.html', { encoding: "UTF8" },
     function (err, data) {
       if (err) throw err;
       progCalderaHTML= data.toString();
     });
 }
-leeHTML();
+leeHTML2();
 var server = http.createServer(function (req, res) {
+  // Parser de los parametros recibidos en el POST
+  var qs = require('querystring');
   var body = "";
+
   req.on('data', function (chunk) {
     body += chunk;	// Datos recibidos desde POST
   });
@@ -312,6 +316,7 @@ var server = http.createServer(function (req, res) {
     }
     else if( url == "/programa_caldera.html"  ){
       // TODO
+      leeHTML2();
       res.end( progCalderaHTML );
     }
 
@@ -350,11 +355,26 @@ var server = http.createServer(function (req, res) {
 	console.log("Enviado temperatura maxima y minima.");
 	return;
     }
+
+    /*
+	Set / Get de programacion de caldera
+	type: tipo de peticion  setProg / getProg
+	options: { prog_caldera , temp_prog }  parametros de setProg
+   */
     else if( url == "/manage_prog_caldera.json" ){
+
+	var post = qs.parse(body);
+
+	if( post['type'] === 'setProg' ){
+		var options = JSON.parse( post['options'] );
+
+		prog_caldera = options.prog_caldera;
+		temp_prog = options.temp_prog;
+	}
 
 	res.end( JSON.stringify( [ prog_caldera, temp_prog ] ) );
 
-	console.log("Enviado programación de caldera.");
+	console.log("Enviado respuesta a programación de caldera.");
 	return;
     }
 
