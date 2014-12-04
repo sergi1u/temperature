@@ -106,8 +106,7 @@ function enviaXively( ){
 	  path: '/v2/feeds/1651193641.json',
 	  method: 'PUT',
 	  headers: {
-	    //'X-ApiKey': 'n157qWw4mF8ub5IjACAqX5TuuBGd7zdn2xGOclZGipHO8XgZ',
-	    'X-ApiKey': 'wKos29LOwVEsHNZOETYNyNrKuxJY5vSNEm2abDO5Ojkai1Un',
+	    'X-ApiKey': 'API KEY',
 	    'Content-Type': 'application/json',
 	    'Content-Length': jdata.length,
 	    'Host': 'api.xively.com'
