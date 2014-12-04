@@ -3,6 +3,9 @@
 <head>
 
 <style>
+body{
+	font-family: Georgia, Serif;
+}
 .tabla_prog_caldera{
 	border-style: solid;
 }
@@ -13,7 +16,13 @@ th{
 td{
 	border-style: solid;
 	border-width: 1px;
+	padding: 5px;
 	text-align: right;
+}
+.input_temp{
+	max-width: 3em;
+	text-align: right;
+	font-weight: bold;
 }
 </style>
 
@@ -30,7 +39,7 @@ function reset_prog_caldera()
 		[3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,3,3,3,3,3,3,3,3],
 		[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
 	    ];
-	var prog_temperature=[0,5,11,15];
+	var prog_temperature=[0,21,19,16.5];
 
 	fill_prog_caldera( prog_caldera );
 	fill_prog_temperature( prog_temperature );
@@ -75,7 +84,8 @@ function fill_prog_temperature( prog_temperature )
 
 	txt +="<tr><th>Temperatures</th>";
 	for( n = 0; n<4; n++){
-	  txt += "<td id='temp_" + n + "'>" + prog_temperature[n] + "</td>";
+	  //txt += "<td id='temp_" + n + "'>" + prog_temperature[n] + "</td>";
+	  txt += "<td><input class='input_temp' type='number' id='temp_" + n  + "' value='" + prog_temperature[n] + "'/></td>";
 	}
 	txt += "</tr>\n";
 	txt += "</table>";
@@ -106,13 +116,43 @@ function cambiaSeleccionados( nuevo_texto )
 
 }
 
+/*
+   Envia la programacion de caldera
+*/
+function sendProgCaldera()
+{
+	var n,m;
+	var options;
+	var prog_caldera = new Array(7);
+	var temp_prog = new Array(3);
+
+	for( n=0;n<7;n++){
+		prog_caldera[n] = new Array(24);
+		for(m=0;m<24;m++){
+			prog_caldera[n][m] = document.getElementById("prog_" + n + "_" + m ).innerHTML;
+		}
+	}
+
+	for( n=0; n<4; n++){
+		temp_prog[n] = document.getElementById("temp_" + n).value;
+	}
+
+	options = { prog_caldera: prog_caldera , temp_prog: temp_prog };
+
+	sendData( 'setProg', options, receivedProgCaldera );
+
+}	// end  setProgCaldera()
+
+/*
+  Pide al servidor la programacion de caldera
+*/
 function getProgCaldera()
 {
-	sendData( 'getProg', receivedProgCaldera );
+	sendData( 'getProg', null, receivedProgCaldera );
 }	// end  getProgCaldera()
 
 // Genera un XMLHttpRequest para enviar peticiones POST
-function sendData( tipo_peticion , callback )
+function sendData( tipo_peticion , options, callback )
 {
 	var param_post = "";
 
@@ -138,6 +178,10 @@ function sendData( tipo_peticion , callback )
 
 	if( tipo_peticion === 'getProg' ){
 		param_post  = "type=" + tipo_peticion;
+	}
+	else if( tipo_peticion === 'setProg' ){
+		param_post  = "type=" + tipo_peticion;
+		param_post += "&options=" + JSON.stringify(options);
 	}
 
 	else
@@ -184,6 +228,7 @@ function receivedProgCaldera(e, xhr, options)
 <nav>
 <input type="button" value="Reset Prog." onclick="javascript:reset_prog_caldera();" />
 <input type="button" value="Get Prog." onclick="javascript:getProgCaldera();" />
+<input type="button" value="Send Prog." onclick="javascript:sendProgCaldera();" />
 
 <input type="button" value="t1" onclick="javascript:cambiaSeleccionados('1');" />
 <input type="button" value="t2" onclick="javascript:cambiaSeleccionados('2');" />
